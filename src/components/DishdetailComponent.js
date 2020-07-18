@@ -18,6 +18,7 @@ import {
 import { Link } from 'react-router-dom';
 import { Control, LocalForm, Errors } from "react-redux-form";
 import { Loading } from "./LoadingComponent";
+import { baseUrl } from "../shared/baseUrl";
 
 const maxLength = (len) => (val) => !val || val.length <= len;
 const minLength = (len) => (val) => val && val.length >= len;
@@ -42,7 +43,12 @@ class CommentForm extends Component {
 
   handleComment(values) {
     this.toggleModal();
-    this.props.addComment(this.props.dishId, values.rating, values.author, values.comment);
+    this.props.postComment(
+      this.props.dishId,
+      values.rating,
+      values.author,
+      values.comment
+    );
     console.log("Current State is: " + this.props.dishId +  JSON.stringify(values));
   }
 
@@ -145,49 +151,43 @@ class CommentForm extends Component {
 }
 
 function RenderDish({dish}){
-    return(
-        <Card>
-            <CardImg top src={dish.image} alt={dish.name} />
-            <CardBody>
-                <CardTitle>{dish.name}</CardTitle>
-                <CardText>{dish.description}</CardText>
-            </CardBody>
-        </Card>
-    )
+    return (
+      <Card>
+        <CardImg top src={baseUrl + dish.image} alt={dish.name} />
+        <CardBody>
+          <CardTitle>{dish.name}</CardTitle>
+          <CardText>{dish.description}</CardText>
+        </CardBody>
+      </Card>
+    );
 }
 
-function RenderComments({comments, addComment, dishId}){
-    const commentList =
-        comments.map((comment) => {
-            var date = new Date(comment.date); 
-            date = date.toLocaleString()
-            if(comment != null)
-            {
-                return (
-                    <li key={comment.id} >
-                        <div>{comment.comment}</div>
-                        <div>--{comment.author} {date}</div>
-                    </li>    
-                );
-            }
-            else{
-                return(
-                    <div>No Comments</div>
-                )
-            }
-        });
-    return (
-        <div>        
-            <h4>Comments</h4>
-            <div>
-                <ul className="list-unstyled">
-                    {commentList}
-                </ul>
-                <CommentForm dishId={dishId} addComment={addComment}/>
-            </div>
-        </div>
-
-    )
+function RenderComments({ comments, postComment, dishId }) {
+  const commentList = comments.map((comment) => {
+    var date = new Date(comment.date);
+    date = date.toLocaleString();
+    if (comment != null) {
+      return (
+        <li key={comment.id}>
+          <div>{comment.comment}</div>
+          <div>
+            --{comment.author} {date}
+          </div>
+        </li>
+      );
+    } else {
+      return <div>No Comments</div>;
+    }
+  });
+  return (
+    <div>
+      <h4>Comments</h4>
+      <div>
+        <ul className="list-unstyled">{commentList}</ul>
+        <CommentForm dishId={dishId} postComment={postComment} />
+      </div>
+    </div>
+  );
 }
 
 const DishDetail = (props) => {
@@ -232,8 +232,8 @@ const DishDetail = (props) => {
             <div className="col-12 col-md-5 m-1">
               <RenderComments
                 comments={props.comments}
-                addComment={props.addComment}
                 dishId={props.dish.id}
+                postComment={props.postComment}
               />
             </div>
           </div>
