@@ -1,6 +1,6 @@
 import * as ActionTypes from './ActionTypes'
 import { baseUrl } from "../shared/baseUrl";
-
+import { Auth } from 'aws-amplify'
 
 export const fetchDishes = () => (dispatch) => {
   dispatch(dishesLoading(true));
@@ -258,3 +258,167 @@ export const postFeedback = (
              alert("Your comment could not be posted\nError: " + error.message);
            });
        };
+
+export const authUser = (username, password) => async (dispatch) => {
+  dispatch(userLoading());
+  try {
+    const res = await Auth.signIn(username, password);
+    console.log(res);
+    dispatch(getUser(res.attributes));
+  } catch (error) {
+    dispatch(authFailed(error.message));
+  }
+};
+
+export const logoutUser = () => async (dispatch) => {
+  dispatch(userLoading());
+  try {
+    await Auth.signOut();
+    dispatch(getUser({}));
+  } catch (error) {
+    dispatch(authFailed(error.message));
+  }
+};
+
+export const userLoading = () => ({
+  type: ActionTypes.USER_LOADING,
+});
+
+export const getUser = (user) => ({
+  type: ActionTypes.AUTH_USER,
+  payload: user
+});
+
+export const authFailed = (errmess) => ({
+  type: ActionTypes.DISHES_FAILED,
+  payload: errmess,
+});
+
+export const addVote = (vote) => ({
+  type: ActionTypes.ADD_VOTE,
+  payload: vote,
+});
+
+export const postVote = (dishId, userId) => (dispatch) => {
+  
+  return fetch(baseUrl + "users/" + userId, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "same-origin",
+  })
+    .then(
+      (response) => {
+        if (response.ok) {
+          return response;
+        } else {
+          var error = new Error(
+            "Error " + response.status + ": " + response.statusText
+          );
+          error.response = response;
+          throw error;
+        }
+      },
+      (error) => {
+        throw error;
+      }
+    )
+    .then((response) => response.json())
+    .then((response) => {
+      const update = {...response,"vote": true, "itemvoteid": dishId}
+      return fetch(baseUrl + "users/" + userId, {
+        method: "PUT",
+        body: JSON.stringify(update),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+      })
+    })
+    .then((response) => response.json())
+    .then((response) => dispatch(addVote(response)))
+    .catch((error) => {
+      console.log("post vote", error.message);
+      alert("Your vote could not be posted\nError: " + error.message);
+    });
+};
+
+export const fetchPolls = () => (dispatch) => {
+  dispatch(pollsLoading());
+
+  return fetch(baseUrl + "polls")
+    .then(
+      (response) => {
+        if (response.ok) {
+          return response;
+        } else {
+          var error = new Error(
+            "Error " + response.status + ": " + response.statusText
+          );
+          error.response = response;
+          throw error;
+        }
+      },
+      (error) => {
+        var errmess = new Error(error.message);
+        throw errmess;
+      }
+    )
+    .then((response) => response.json())
+    .then((polls) => dispatch(addPolls(polls)))
+    .catch((error) => dispatch(pollsFailed(error.message)));
+};
+
+export const pollsLoading = () => ({
+  type: ActionTypes.POLLS_LOADING,
+});
+
+export const pollsFailed = (errmess) => ({
+  type: ActionTypes.POLLS_FAILED,
+  payload: errmess,
+});
+
+export const addPolls = (leaders) => ({
+  type: ActionTypes.ADD_POLLS,
+  payload: leaders,
+});
+
+export const fetchPoll = (pollId) => (dispatch) => {
+  dispatch(pollLoading());
+  return fetch(baseUrl + "polls?key="+pollId)
+    .then(
+      (response) => {
+        if (response.ok) {
+          return response;
+        } else {
+          var error = new Error(
+            "Error " + response.status + ": " + response.statusText
+          );
+          error.response = response;
+          throw error;
+        }
+      },
+      (error) => {
+        var errmess = new Error(error.message);
+        throw errmess;
+      }
+    )
+    .then((response) => response.json())
+    .then((poll) => dispatch(addPoll(poll)))
+    .catch((error) => dispatch(pollFailed(error.message)));
+};
+
+export const pollLoading = () => ({
+  type: ActionTypes.POLL_LOADING,
+});
+
+export const pollFailed = (errmess) => ({
+  type: ActionTypes.POLL_FAILED,
+  payload: errmess,
+});
+
+export const addPoll = (leaders) => ({
+  type: ActionTypes.ADD_POLL,
+  payload: leaders,
+});

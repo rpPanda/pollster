@@ -3,7 +3,6 @@ import { Breadcrumb, BreadcrumbItem, Card, CardBody, CardHeader, Media } from 'r
 import { Link } from 'react-router-dom';
 import { Fade, Stagger } from "react-animation-components";
 import { Loading } from "./LoadingComponent";
-import { baseUrl } from "../shared/baseUrl";
 
 function About(props) {
 
@@ -12,7 +11,7 @@ function About(props) {
         return (
             <Media>
                 <Media left className="col-md-2 m-auto">
-                    <Media object src={baseUrl + leader.image} alt={leader.name} />
+                    <Media object src={leader.image} alt={leader.name} />
                 </Media>
                 <Media body>
                     <Media heading>

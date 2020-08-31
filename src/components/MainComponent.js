@@ -6,6 +6,10 @@ import Contact from './ContactComponent';
 import DishDetail from './DishdetailComponent';
 import About from './AboutComponent';
 import Home from './HomeComponent';
+import Vote from './VoteComponent';
+import CreatePoll from './CreatePollComponent'
+import PollDisplay from './PollDisplayComponent'
+import ListPoll from './ListPollComponent'
 import { Switch, Route, Redirect, withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import {
@@ -14,7 +18,12 @@ import {
   fetchComments,
   fetchPromos,
   fetchLeaders,
-  postFeedback
+  authUser,
+  logoutUser,
+  postFeedback,
+  postVote,
+  fetchPolls,
+  fetchPoll,
 } from "../redux/ActionCreators";
 import { TransitionGroup, CSSTransition } from "react-transition-group";
 import { actions } from "react-redux-form";
@@ -25,6 +34,9 @@ const mapStateToProps = state => {
     comments: state.comments,
     promotions: state.promotions,
     leaders: state.leaders,
+    users: state.users,
+    polls: state.polls,
+    poll: state.poll,
   }
 }
 
@@ -60,6 +72,11 @@ const mapDispatchToProps = (dispatch) => ({
         message
       )
     ),
+  authUser: (user, password) => dispatch(authUser(user, password)),
+  logoutUser: () => dispatch(logoutUser()),
+  postVote: (dishId, userId) => dispatch(postVote(dishId, userId)),
+  fetchPolls: () => dispatch(fetchPolls()),
+  fetchPoll: (pollId) => dispatch(fetchPoll(pollId)),
 });
 
 class Main extends Component {
@@ -69,6 +86,7 @@ class Main extends Component {
     this.props.fetchComments();
     this.props.fetchPromos();
     this.props.fetchLeaders();
+    this.props.fetchPolls();
   }
 
   render() {
@@ -111,9 +129,21 @@ class Main extends Component {
       );
     };
 
+    const PollWithId = ({match}) => {
+      return (
+        <PollDisplay 
+          pollId={match.params.pollId} 
+          poll={this.props.poll} 
+          fetchPoll={fetchPoll} />
+      );
+    }
     return (
       <div>
-        <Header />
+        <Header
+          users={this.props.users}
+          authUser={this.props.authUser}
+          logoutUser={this.props.logoutUser}
+        />
         <TransitionGroup>
           <CSSTransition
             key={this.props.location.key}
@@ -144,6 +174,20 @@ class Main extends Component {
                   />
                 )}
               />
+              <Route
+                exact
+                path="/vote"
+                component={() => (
+                  <Vote
+                    dishes={this.props.dishes}
+                    postVote={this.props.postVote}
+                    user={this.props.users.user}
+                  />
+                )}
+              />
+              <Route exact path="/poll/:pollId" component={PollWithId} />
+              <Route path="/createpoll" component={CreatePoll} />
+              <Route exact path="/poll" component={() => <ListPoll polls={this.props.polls}/>} />
               <Redirect to="/home" />
             </Switch>
           </CSSTransition>

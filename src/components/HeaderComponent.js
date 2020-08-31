@@ -1,70 +1,121 @@
-import React, { Component } from "react";
+import React, { useState } from "react";
 import {
   Navbar, NavbarBrand, Nav, NavbarToggler, Collapse, NavItem, Jumbotron,
   Button, Modal, ModalHeader, ModalBody,
-  Form, FormGroup, Input, Label
+  Form, FormGroup, Input, Label, Spinner
 } from 'reactstrap';
 import { NavLink } from 'react-router-dom';
+import { useFormFields } from "../libs/hooksLib";
 
-class Header extends Component {
-  constructor(props) {
-    super(props);
+// import { Loading } from './LoadingComponent';
 
-    this.state = {
-      isNavOpen: false,
-      isModalOpen: false
-    };
-
-    this.toggleModal = this.toggleModal.bind(this);
-    this.handleLogin = this.handleLogin.bind(this);
+function Header(props) {
+  
+  const [isNavOpen, setIsNavOpen] = useState(false);
+  const [isModalOpen, setIModalOpen] = useState(false);
+  const [fields, handleFieldChange] = useFormFields({
+    username: "",
+    password: "",
+  });
+  //  this.toggleModal = this.toggleModal.bind(this);
+  //  this.handleLogin = this.handleLogin.bind(this);
+  
+  function toggleNav() {
+    setIsNavOpen(!isNavOpen);
   }
 
-  toggleNav() {
-    this.setState({
-      isNavOpen: !this.state.isNavOpen
-    });
+  function toggleModal() {
+    setIModalOpen(!isModalOpen);
   }
 
-  toggleModal() {
-    this.setState({
-      isModalOpen: !this.state.isModalOpen
-    });
+  function Login({ users }) {
+    if (users.isLoading) return <Spinner size="sm" color="primary" />;
+    else if (users.user.name)
+      return (
+        <NavItem>
+          <b style={{ color: "white" }}>Welcome, {users.user.name} </b>
+          <Button outline onClick={handleLogout}>
+            <span className="fa fa-sign-out fa-lg"></span>
+            Logout
+          </Button>
+        </NavItem>
+      );
+    else
+      return (
+        <NavItem>
+          <Button outline onClick={toggleModal}>
+            <span className="fa fa-sign-in fa-lg"></span> Login
+          </Button>
+        </NavItem>
+      );
   }
 
-  handleLogin(event) {
-    this.toggleModal();
-    alert("Username: " + this.username.value + " Password: " + this.password.value
-      + " Remember: " + this.remember.checked);
+  function handleLogin(event) {
+    console.log(fields);
+    
+    toggleModal();
     event.preventDefault();
-
+    props.authUser(fields.username, fields.password);
   }
-
-  render() {
+  
+   async function handleLogout() {
+     props.logoutUser();
+   }
+  
     return (
       <div>
         <Navbar dark expand="md">
           <div className="container">
-            <NavbarToggler onClick={this.toggleNav} />
-            <NavbarBrand className="mr-auto" href="/"><img src='assets/images/logo.png' height="30" width="41" alt='Ristorante Con Fusion' /></NavbarBrand>
-            <Collapse isOpen={this.state.isNavOpen} navbar>
+            <NavbarToggler onClick={toggleNav} />
+            <NavbarBrand className="mr-auto" href="/">
+              <img
+                src="assets/images/logo.png"
+                height="30"
+                width="41"
+                alt="Ristorante Con Fusion"
+              />
+            </NavbarBrand>
+            <Collapse isOpen={isNavOpen} navbar>
               <Nav navbar>
                 <NavItem>
-                  <NavLink className="nav-link" to='/home'><span className="fa fa-home fa-lg"></span> Home</NavLink>
+                  <NavLink className="nav-link" to="/home">
+                    <span className="fa fa-home fa-lg"></span> Home
+                  </NavLink>
                 </NavItem>
                 <NavItem>
-                  <NavLink className="nav-link" to='/aboutus'><span className="fa fa-info fa-lg"></span> About Us</NavLink>
+                  <NavLink className="nav-link" to="/aboutus">
+                    <span className="fa fa-info fa-lg"></span> About Us
+                  </NavLink>
                 </NavItem>
                 <NavItem>
-                  <NavLink className="nav-link" to='/menu'><span className="fa fa-list fa-lg"></span> Menu</NavLink>
+                  <NavLink className="nav-link" to="/menu">
+                    <span className="fa fa-list fa-lg"></span> Menu
+                  </NavLink>
                 </NavItem>
                 <NavItem>
-                  <NavLink className="nav-link" to='/contactus'><span className="fa fa-address-card fa-lg"></span> Contact Us</NavLink>
+                  <NavLink className="nav-link" to="/contactus">
+                    <span className="fa fa-address-card fa-lg"></span> Contact
+                    Us
+                  </NavLink>
+                </NavItem>
+                <NavItem>
+                  <NavLink className="nav-link" to="/vote">
+                    <span className="fa fa-thumbs-o-up fa-lg"></span> Vote
+                  </NavLink>
+                </NavItem>
+                <NavItem>
+                  <NavLink className="nav-link" to="/poll">
+                    <span className="fa fa-bar-chart-o fa-lg"></span> Poll
+                  </NavLink>
+                </NavItem>
+                <NavItem>
+                  <NavLink className="nav-link" to="/createpoll">
+                    <span className="fa fa-wrench fa-lg"></span> Create Poll
+                  </NavLink>
                 </NavItem>
               </Nav>
               <Nav className="ml-auto" navbar>
-                <NavItem>
-                  <Button outline onClick={this.toggleModal}><span className="fa fa-sign-in fa-lg"></span> Login</Button>
-                </NavItem>
+                <Login users={props.users} />
               </Nav>
             </Collapse>
           </div>
@@ -74,39 +125,45 @@ class Header extends Component {
             <div className="row row-header">
               <div className="col-12 col-sm-6">
                 <h1>Ristorante con Fusion</h1>
-                <p>We take inspiration from the World's best cuisines, and create a unique fusion experience. Our lipsmacking creations will tickle your culinary senses!</p>
+                <p>
+                  We take inspiration from the World's best cuisines, and create
+                  a unique fusion experience. Our lipsmacking creations will
+                  tickle your culinary senses!
+                </p>
               </div>
             </div>
           </div>
         </Jumbotron>
-        <Modal isOpen={this.state.isModalOpen} toggle={this.toggleModal}>
-          <ModalHeader toggle={this.toggleModal}>Login</ModalHeader>
+        <Modal isOpen={isModalOpen} toggle={toggleModal}>
+          <ModalHeader toggle={toggleModal}>Login</ModalHeader>
           <ModalBody>
-            <Form onSubmit={this.handleLogin}>
+            <Form onSubmit={handleLogin}>
               <FormGroup>
                 <Label htmlFor="username">Username</Label>
-                <Input type="text" id="username" name="username"
-                  innerRef={(input) => this.username = input} />
+                <Input
+                  type="text"
+                  id="username"
+                  name="username"
+                  onChange={handleFieldChange}
+                />
               </FormGroup>
               <FormGroup>
                 <Label htmlFor="password">Password</Label>
-                <Input type="password" id="password" name="password"
-                  innerRef={(input) => this.password = input} />
+                <Input
+                  type="password"
+                  id="password"
+                  name="password"
+                  onChange={handleFieldChange}
+                />
               </FormGroup>
-              <FormGroup check>
-                <Label check>
-                  <Input type="checkbox" name="remember"
-                    innerRef={(input) => this.remember = input} />
-                                    Remember me
-                                </Label>
-              </FormGroup>
-              <Button type="submit" value="submit" color="primary">Login</Button>
+              <Button type="submit" value="submit" color="primary">
+                Login
+              </Button>
             </Form>
           </ModalBody>
-        </Modal>  
+        </Modal>
       </div>
     );
   }
-}
 
 export default Header;
